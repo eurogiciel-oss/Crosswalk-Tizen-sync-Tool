@@ -1,0 +1,35 @@
+#This should fetch Crosswalk into src/xwalk and generate a
+#   .gclient-xwalk with the other dependencies.
+gclient sync
+
+UPSTREAM_SRC=/home/ronanguirec/Tizen_crosswalk/Tizen_Crosswalk_upstream
+TIZEN_DST=/home/ronanguirec/Tizen_crosswalk/Tizen_Crosswalk
+
+
+#This will fetch all the other source files but not run any hooks.
+gclient sync --gclientfile=.gclient-xwalk --nohooks
+
+#Generate the LASTCHANGE files.
+source_root=$(pwd)
+python $source_root/src/build/util/lastchange.py \
+       -o $source_root/src/build/util/LASTCHANGE \
+       -s $source_root/src
+
+python $source_root/src/build/util/lastchange.py \
+       -o $source_root/src/build/util/LASTCHANGE.blink \
+       -s $source_root/src/third_party/WebKit
+
+#Import the sources
+mkdir -p ${TIZEN_DST}/src
+cp -ra ${UPSTREAM_SRC}/src/* ${TIZEN_DST}/src/
+#Clean git project
+find ${TIZEN_DST}/src -type d -name '.git' -exec rm -fr {} \;
+find ${TIZEN_DST}/src -type d -name '.gitignore' -exec rm -f {} \;
+#Clean SVN project
+find ${TIZEN_DST}/src -type d -name '.svn' -exec rm -fr {} \;
+
+
+#Import packging (gbs do not allow link.)
+mkdir -p ${TIZEN_DST}/packaging
+cp ${UPSTREAM_SRC}/src/xwalk/packaging/* ${TIZEN_DST}/packaging/
+rm -f packaging/gbp*
