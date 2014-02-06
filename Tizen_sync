@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/bash
 #
 # Copyright 2013, Intel Inc.
 #
@@ -50,6 +50,8 @@ python $source_root/src/build/util/lastchange.py \
 
 #Import the sources
 mkdir -p ${TIZEN_DST}/src
+rm -fr ${TIZEN_DST}/src/*
+
 cp -ra ${UPSTREAM_SRC}/src/* ${TIZEN_DST}/src/
 #Clean git project
 find ${TIZEN_DST}/src -type d -name '.git' -exec rm -fr {} \;
@@ -60,5 +62,6 @@ find ${TIZEN_DST}/src -type d -name '.svn' -exec rm -fr {} \;
 
 #Import packging (gbs do not allow link.)
 mkdir -p ${TIZEN_DST}/packaging
+rm ${TIZEN_DST}/packaging/*
 cp ${UPSTREAM_SRC}/src/xwalk/packaging/* ${TIZEN_DST}/packaging/
-rm -f packaging/gbp*
+rm -f ${TIZEN_DST}/packaging/gbp*
