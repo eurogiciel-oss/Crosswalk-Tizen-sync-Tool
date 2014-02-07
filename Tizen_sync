@@ -26,7 +26,7 @@
 
 
 
-UPSTREAM_SRC=${HOME}/Tizen_crosswalk/Tizen_Crosswalk_upstream
+UPSTREAM_SRC=${HOME}/Tizen_crosswalk/Crosswalk-Tizen-sync-Tool
 TIZEN_DST=${HOME}/Tizen_crosswalk/Tizen_Crosswalk
 
 mkdir -p ${TIZEN_DST}

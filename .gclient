@@ -1,6 +1,6 @@
 solutions = [
   { "name"        : "src/xwalk",
-    "url"         : "git://github.com/crosswalk-project/crosswalk.git",
+    "url"         : "git://github.com/crosswalk-project/crosswalk.git@origin/master",
     "deps_file"   : "DEPS",
     "managed"     : True,
     "custom_deps" : {
