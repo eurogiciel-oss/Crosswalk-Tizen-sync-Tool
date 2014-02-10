@@ -26,11 +26,22 @@
 
 
 
-UPSTREAM_SRC=${HOME}/Tizen_crosswalk/Crosswalk-Tizen-sync-Tool
-TIZEN_DST=${HOME}/Tizen_crosswalk/Tizen_Crosswalk
+UPSTREAM_SRC=${PWD}
+TIZEN_DST=${PWD}/pre-deliver
+ROOTDIR=${PWD}
 
-mkdir -p ${TIZEN_DST}
+mkdir -p ${UPSTREAM_SRC}
+#mkdir -p ${TIZEN_DST}
 
+# Catch GClient
+[ -d depot_tools ] || git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+cd depot_tools
+git pull
+cd ..
+
+PATH=$PWD/depot_tools:$PATH
+
+# Catch Crosswalk upstream project
 cd ${UPSTREAM_SRC}
 
 gclient sync
@@ -47,6 +58,35 @@ python $source_root/src/build/util/lastchange.py \
 python $source_root/src/build/util/lastchange.py \
        -o $source_root/src/build/util/LASTCHANGE.blink \
        -s $source_root/src/third_party/WebKit
+
+cd $ROOTDIR
+exit 0
+
+# TODO: Add remote for Eurogiciel-OSS forked projects.
+cd ${UPSTREAM_SRC}/src/third_party/WebKit
+git remote add upstream git@github.com:crosswalk-project/blink-crosswalk.git
+git remote set-url origin git@github.com:eurogiciel-oss/blink-crosswalk.git
+git fetch upstream
+git fetch origin
+
+cd ${UPSTREAM_SRC}/src/xwalk
+git remote add upstream git@github.com:crosswalk-project/crosswalk.git
+git remote set-url origin git@github.com:eurogiciel-oss/crosswalk.git
+git fetch upstream
+git fetch origin
+
+cd ${UPSTREAM_SRC}/src
+git remote add upstream git@github.com:crosswalk-project/chromium-crosswalk.git
+git remote set-url origin git@github.com:eurogiciel-oss/chromium-crosswalk.git
+git fetch upstream
+git fetch origin
+
+# gbs build --include-all -A x86_64 -P generic-x86_64 --define 'BUILDDIR_NAME /var/tmp/xwalk-build' -C
+cd $ROOTDIR
+
+exit 0
+#################################################################
+# todo: separate in a new script ? tbd
 
 #Import the sources
 mkdir -p ${TIZEN_DST}/src

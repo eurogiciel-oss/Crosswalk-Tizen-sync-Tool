@@ -1,5 +1,15 @@
 .gclient-xwalk
 .gclient-xwalk_entries
 .gclient_entries
-32.*
-src
+32*
+src/third_party/cros_dbus_cplusplus/source/.git
+src/third_party/angle_dx11/.git
+src/third_party/WebKit/.git
+src/third_party/mtpd/source/.git
+src/third_party/freetype2/src/.git
+src/xwalk/.git
+src/tools/swarming_client/.git
+src/.git
+src/ozone/.git
+depot_tools/
+

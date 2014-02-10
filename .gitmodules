@@ -1,0 +1,41 @@
+[submodule "src/third_party/cros_dbus_cplusplus/source"]
+	path = src/third_party/cros_dbus_cplusplus/source
+	url = https://chromium.googlesource.com/chromiumos/third_party/dbus-cplusplus.git
+  ignore = dirty
+[submodule "src/third_party/angle_dx11"]
+	path = src/third_party/angle_dx11
+	url = https://chromium.googlesource.com/external/angle.git
+  ignore = dirty
+[submodule "src/third_party/WebKit"]
+	path = src/third_party/WebKit
+	url = https://github.com/crosswalk-project/blink-crosswalk.git
+  ignore = dirty
+[submodule "src/third_party/mtpd/source"]
+	path = src/third_party/mtpd/source
+	url = https://chromium.googlesource.com/chromiumos/platform/mtpd.git
+  ignore = dirty
+[submodule "src/third_party/freetype2/src"]
+	path = src/third_party/freetype2/src
+	url = https://chromium.googlesource.com/chromium/src/third_party/freetype2.git
+  ignore = dirty
+[submodule "src/xwalk"]
+	path = src/xwalk
+	url = git://github.com/crosswalk-project/crosswalk.git
+  ignore = dirty
+[submodule "src/tools/swarming_client"]
+	path = src/tools/swarming_client
+	url = https://chromium.googlesource.com/external/swarming.client.git
+  ignore = dirty
+[submodule "src"]
+	path = src
+	url = https://github.com/crosswalk-project/chromium-crosswalk.git
+  ignore = dirty
+[submodule "src/ozone"]
+	path = src/ozone
+	url = https://github.com/01org/ozone-wayland.git
+  ignore = dirty
+[submodule "depot_tools"]
+	path = depot_tools
+	url = https://chromium.googlesource.com/chromium/tools/depot_tools.git
+  ignore = dirty
+
