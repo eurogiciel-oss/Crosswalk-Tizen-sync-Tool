@@ -31,7 +31,7 @@ TIZEN_DST=${PWD}/pre-deliver
 ROOTDIR=${PWD}
 
 mkdir -p ${UPSTREAM_SRC}
-mkdir -p ${TIZEN_DST}
+#mkdir -p ${TIZEN_DST}
 
 # Catch GClient
 [ -d depot_tools ] || git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
