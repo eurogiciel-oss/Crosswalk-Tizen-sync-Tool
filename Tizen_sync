@@ -27,8 +27,10 @@
 
 
 UPSTREAM_SRC=${PWD}
-TIZEN_DST=${PWD}/pre-deliver
+TIZEN_DST=${PWD}/Tizen_Crosswalk
 ROOTDIR=${PWD}
+
+which svn > /dev/null || (echo "Subversion is not installed. Please install it before using this script." ; exit 1)
 
 mkdir -p ${UPSTREAM_SRC}
 #mkdir -p ${TIZEN_DST}
@@ -40,6 +42,15 @@ git pull
 cd ..
 
 PATH=$PWD/depot_tools:$PATH
+
+# if project already downloaded, catch latest upstream version
+[ -d ${UPSTREAM_SRC}/src/xwalk ] && (
+      echo "Upstream project already present : Aligning local dir on remote/origin/master"
+      cd ${UPSTREAM_SRC}/src/xwalk
+      git pull origin master
+      git checkout master
+      git reset --keep origin/master
+)
 
 # Catch Crosswalk upstream project
 cd ${UPSTREAM_SRC}
@@ -60,26 +71,19 @@ python $source_root/src/build/util/lastchange.py \
        -s $source_root/src/third_party/WebKit
 
 cd $ROOTDIR
-exit 0
 
-# TODO: Add remote for Eurogiciel-OSS forked projects.
+# Add remote for Eurogiciel-OSS forked projects.
 cd ${UPSTREAM_SRC}/src/third_party/WebKit
-git remote add upstream git@github.com:crosswalk-project/blink-crosswalk.git
-git remote set-url origin git@github.com:eurogiciel-oss/blink-crosswalk.git
-git fetch upstream
-git fetch origin
+git remote show eurogiciel &> /dev/null || git remote add eurogiciel git@github.com:eurogiciel-oss/blink-crosswalk.git
+git fetch eurogiciel
 
 cd ${UPSTREAM_SRC}/src/xwalk
-git remote add upstream git@github.com:crosswalk-project/crosswalk.git
-git remote set-url origin git@github.com:eurogiciel-oss/crosswalk.git
-git fetch upstream
-git fetch origin
+git remote show eurogiciel &> /dev/null || git remote add eurogiciel git@github.com:eurogiciel-oss/crosswalk.git
+git fetch eurogiciel
 
 cd ${UPSTREAM_SRC}/src
-git remote add upstream git@github.com:crosswalk-project/chromium-crosswalk.git
-git remote set-url origin git@github.com:eurogiciel-oss/chromium-crosswalk.git
-git fetch upstream
-git fetch origin
+git remote show eurogiciel &> /dev/null || git remote add eurogiciel git@github.com:eurogiciel-oss/chromium-crosswalk.git
+git fetch eurogiciel
 
 # gbs build --include-all -A x86_64 -P generic-x86_64 --define 'BUILDDIR_NAME /var/tmp/xwalk-build' -C
 cd $ROOTDIR

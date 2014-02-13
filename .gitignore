@@ -12,4 +12,5 @@ src/tools/swarming_client/.git
 src/.git
 src/ozone/.git
 depot_tools/
+Tizen_Crosswalk/
 
