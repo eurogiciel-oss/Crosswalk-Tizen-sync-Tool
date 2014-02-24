@@ -55,10 +55,12 @@ PATH=$PWD/depot_tools:$PATH
 # Catch Crosswalk upstream project
 cd ${UPSTREAM_SRC}
 
-gclient sync
+echo "Running: gclient sync -v"
+gclient sync -v
 
 #This will fetch all the other source files but not run any hooks.
-gclient sync --gclientfile=.gclient-xwalk --nohooks
+echo "Running: gclient sync -v --gclientfile=.gclient-xwalk --nohooks"
+gclient sync -v --gclientfile=.gclient-xwalk --nohooks
 
 #Generate the LASTCHANGE files.
 source_root=$(pwd)

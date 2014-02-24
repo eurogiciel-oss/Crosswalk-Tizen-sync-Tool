@@ -2,6 +2,7 @@
 .gclient-xwalk_entries
 .gclient_entries
 32*
+34*
 src/third_party/cros_dbus_cplusplus/source/.git
 src/third_party/angle_dx11/.git
 src/third_party/WebKit/.git
