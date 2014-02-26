@@ -30,7 +30,7 @@ UPSTREAM_SRC=${PWD}
 TIZEN_DST=${PWD}/Tizen_Crosswalk
 ROOTDIR=${PWD}
 
-which svn > /dev/null || (echo "Subversion is not installed. Please install it before using this script." ; exit 1)
+which svn > /dev/null || {echo "Subversion is not installed. Please install it before using this script." ; exit 1}
 
 mkdir -p ${UPSTREAM_SRC}
 #mkdir -p ${TIZEN_DST}
