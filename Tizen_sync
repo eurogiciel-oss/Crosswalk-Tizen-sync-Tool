@@ -25,89 +25,114 @@
 #   .gclient-xwalk with the other dependencies.
 
 
-
+### Vars ###
 UPSTREAM_SRC=${PWD}
 TIZEN_DST=${PWD}/Tizen_Crosswalk
-ROOTDIR=${PWD}
+LOGFILE=${PWD}/.Tizen_sync.log
 
-which svn > /dev/null || {echo "Subversion is not installed. Please install it before using this script." ; exit 1}
 
-mkdir -p ${UPSTREAM_SRC}
+### Functions ###
+
+# Remove existing log file.
+function drop_logs {
+  [ ! -f ${LOGFILE} ] || rm ${LOGFILE}
+}
+
+# Launch a command line and catch stdio & stderr output in a log file.
+function process_and_logs {
+  [ $# -eq 0 ] || {
+    echo "$ $*" | tee -a ${LOGFILE}
+    if [ "$1" == "cd" ]; then
+      $* 2>&1
+    else
+      $* 2>&1 | tee -a ${LOGFILE}
+    fi
+  }
+}
+
+
+### Script entry point ###
+SCRIPTROOTDIR=${PWD}
+
+which svn > /dev/null || { echo "Subversion is not installed. Please install it before using this script." ; exit 1; }
+drop_logs
+
+process_and_logs mkdir -p ${UPSTREAM_SRC}
 #mkdir -p ${TIZEN_DST}
 
 # Catch GClient
-[ -d depot_tools ] || git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-cd depot_tools
-git pull
-cd ..
+[ -d depot_tools ] || process_and_logs git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+process_and_logs cd depot_tools
+process_and_logs git pull origin master
+process_and_logs cd ..
 
 PATH=$PWD/depot_tools:$PATH
 
 # if project already downloaded, catch latest upstream version
 [ -d ${UPSTREAM_SRC}/src/xwalk ] && (
-      echo "Upstream project already present : Aligning local dir on remote/origin/master"
-      cd ${UPSTREAM_SRC}/src/xwalk
-      git pull origin master
-      git checkout master
-      git reset --keep origin/master
+      process_and_logs echo "Upstream project already present : Aligning local dir on remote/origin/master"
+      process_and_logs cd ${UPSTREAM_SRC}/src/xwalk
+      process_and_logs git pull origin master
+      process_and_logs git checkout master
+      process_and_logs git reset --keep origin/master
 )
 
 # Catch Crosswalk upstream project
-cd ${UPSTREAM_SRC}
-
-echo "Running: gclient sync -v"
-gclient sync -v
+process_and_logs cd ${UPSTREAM_SRC}
+process_and_logs gclient sync -v
 
 #This will fetch all the other source files but not run any hooks.
-echo "Running: gclient sync -v --gclientfile=.gclient-xwalk --nohooks"
-gclient sync -v --gclientfile=.gclient-xwalk --nohooks
+process_and_logs gclient sync -v --gclientfile=.gclient-xwalk --nohooks
 
 #Generate the LASTCHANGE files.
 source_root=$(pwd)
-python $source_root/src/build/util/lastchange.py \
+process_and_logs python $source_root/src/build/util/lastchange.py \
        -o $source_root/src/build/util/LASTCHANGE \
        -s $source_root/src
 
-python $source_root/src/build/util/lastchange.py \
+process_and_logs python $source_root/src/build/util/lastchange.py \
        -o $source_root/src/build/util/LASTCHANGE.blink \
        -s $source_root/src/third_party/WebKit
 
-cd $ROOTDIR
+#process_and_logs cd $SCRIPTROOTDIR
 
-# Add remote for Eurogiciel-OSS forked projects.
-cd ${UPSTREAM_SRC}/src/third_party/WebKit
-git remote show eurogiciel &> /dev/null || git remote add eurogiciel git@github.com:eurogiciel-oss/blink-crosswalk.git
-git fetch eurogiciel
+# Add remote for Eurogiciel-OSS GitHub forked projects.
+if [ -d ${UPSTREAM_SRC}/src/third_party/WebKit ]; then
+  process_and_logs cd ${UPSTREAM_SRC}/src/third_party/WebKit
+  git remote show eurogiciel &> /dev/null || process_and_logs git remote add eurogiciel git@github.com:eurogiciel-oss/blink-crosswalk.git
+  process_and_logs git fetch eurogiciel
+else
+  process_and_logs echo "Error: ${UPSTREAM_SRC}/src/third_party/WebKit not found !"
+  process_and_logs echo "  There may be an issue while retriving the source tree"
+fi
 
-cd ${UPSTREAM_SRC}/src/xwalk
-git remote show eurogiciel &> /dev/null || git remote add eurogiciel git@github.com:eurogiciel-oss/crosswalk.git
-git fetch eurogiciel
+if [ -d ${UPSTREAM_SRC}/src/xwalk ]; then
+  process_and_logs cd ${UPSTREAM_SRC}/src/xwalk
+  git remote show eurogiciel &> /dev/null || process_and_logs git remote add eurogiciel git@github.com:eurogiciel-oss/crosswalk.git
+  process_and_logs git fetch eurogiciel
+else
+  process_and_logs echo "Error: ${UPSTREAM_SRC}/src/xwalk not found !"
+  process_and_logs echo "  There may be an issue while retriving the source tree"
+fi
 
-cd ${UPSTREAM_SRC}/src
-git remote show eurogiciel &> /dev/null || git remote add eurogiciel git@github.com:eurogiciel-oss/chromium-crosswalk.git
-git fetch eurogiciel
+if [ -d ${UPSTREAM_SRC}/src ]; then
+  process_and_logs cd ${UPSTREAM_SRC}/src
+  git remote show eurogiciel &> /dev/null || process_and_logs git remote add eurogiciel git@github.com:eurogiciel-oss/chromium-crosswalk.git
+  process_and_logs git fetch eurogiciel
+else
+  process_and_logs echo "Error: ${UPSTREAM_SRC}/src not found !"
+  process_and_logs echo "  There may be an issue while retriving the source tree"
+fi
 
-# gbs build --include-all -A x86_64 -P generic-x86_64 --define 'BUILDDIR_NAME /var/tmp/xwalk-build' -C
-cd $ROOTDIR
+process_and_logs cd $SCRIPTROOTDIR
+
+echo ""
+echo "Upstream sync finished. Please refer to log file for details and check for errors:"
+echo "   "${LOGFILE}
+echo ""
+echo "Note for developpers: to build xwalk, you can perform:"
+echo "   gbs build --include-all -A x86_64 -P generic-x86_64 --define 'BUILDDIR_NAME /var/tmp/xwalk-build' -C"
 
 exit 0
 #################################################################
-# todo: separate in a new script ? tbd
 
-#Import the sources
-mkdir -p ${TIZEN_DST}/src
-rm -fr ${TIZEN_DST}/src/*
-
-cp -ra ${UPSTREAM_SRC}/src/* ${TIZEN_DST}/src/
-#Clean git project
-find ${TIZEN_DST}/src -type d -name '.git' -exec rm -fr {} \;
-find ${TIZEN_DST}/src -type d -name '.gitignore' -exec rm -f {} \;
-#Clean SVN project
-find ${TIZEN_DST}/src -type d -name '.svn' -exec rm -fr {} \;
-
-
-#Import packging (gbs do not allow link.)
-mkdir -p ${TIZEN_DST}/packaging
-rm ${TIZEN_DST}/packaging/*
-cp ${UPSTREAM_SRC}/src/xwalk/packaging/* ${TIZEN_DST}/packaging/
-rm -f ${TIZEN_DST}/packaging/gbp*
