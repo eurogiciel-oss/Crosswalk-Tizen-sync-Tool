@@ -54,7 +54,8 @@ cp ${UPSTREAM_SRC}/src/xwalk/packaging/* ${TIZEN_DST}/packaging/
 rm -f ${TIZEN_DST}/packaging/gbp*
 
 # Display some informations:
-echo "Source code as been duplicated in ${TIZEN_DST}. Here are some tips for next steps :"
+echo "Source code as been duplicated in ${TIZEN_DST}"
+echo "Here are some tips for next steps :"
 echo ""
 echo "First go to dest dir:"
 echo "    cd ${TIZEN_DST}"
@@ -65,12 +66,16 @@ echo "    git status"
 #echo "You can ask git to add all file as upstream tree:"
 #echo "    git add *"
 echo "You can stage all changes:"
-echo "   git add -u"
+echo "    git add -u"
+echo "    git add ."
 echo "You can commit changes adding a message refering to upstream version:"
 echo ""
 [ -f ${TIZEN_DST}/src/xwalk/VERSION ] && cat ${TIZEN_DST}/src/xwalk/VERSION
 echo ""
 echo "   upstream commit-id in from github crosswalk.git: "
+cd ${UPSTREAM_SRC}/src/xwalk
+echo "   `git log | head -1`"
+cd ${OLDPWD}
 echo "Upstream version 5.34.92.0 --- TODO"
 echo "   git commit -s"
 echo ""
