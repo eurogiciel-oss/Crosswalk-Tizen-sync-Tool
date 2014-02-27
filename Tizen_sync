@@ -131,6 +131,7 @@ echo "Upstream sync finished. Please refer to log file for details and check for
 echo "   "${LOGFILE}
 echo ""
 echo "Note for developpers: to build xwalk, you can perform:"
+echo "   cd ${UPSTREAM_SRC}/src/xwalk"
 echo "   gbs build --include-all -A x86_64 -P generic-x86_64 --define 'BUILDDIR_NAME /var/tmp/xwalk-build' -C"
 
 exit 0

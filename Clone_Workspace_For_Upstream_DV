@@ -24,7 +24,7 @@ UPSTREAM_SRC=${PWD}
 TIZEN_DST=${PWD}/Tizen_Crosswalk
 ROOTDIR=${PWD}
 
-which svn > /dev/null || (echo "Subversion is not installed. Please install it before using this script." ; exit 1)
+which svn > /dev/null || { echo "Subversion is not installed. Please install it before using this script." ; exit 1; }
 
 # TODO: Check source directory presence
 
@@ -42,10 +42,10 @@ mkdir -p ${TIZEN_DST}
 ##Clean SVN project
 #find ${TIZEN_DST}/src -type d -name '.svn' -exec rm -fr {} \;
 
-echo Prepare for push on Tizen.org : rsync process in progress...
-time rsync -a --delete --exclude '.git*' --exclude '.svn' ${UPSTREAM_SRC}/src ${TIZEN_DST}
-echo
-echo done.
+echo "Prepare for push on Tizen.org : rsync process in progress..."
+time rsync -a --delete --force --delete-excluded --exclude '.git*' --exclude '.svn' ${UPSTREAM_SRC}/src ${TIZEN_DST}
+echo ""
+echo "done."
 
 #Import packging (gbs do not allow link.)
 mkdir -p ${TIZEN_DST}/packaging
@@ -60,8 +60,25 @@ echo "First go to dest dir:"
 echo "    cd ${TIZEN_DST}"
 echo "You can see changes using:"
 echo "    git status"
-echo "You can ask git to remove all file as upstream tree:"
-echo "    for all in \`git status | grep \"deleted:\" | cut -d ':' -f 2 - | sed 's/ //g'\`; do echo \$all; git rm \"\$all\"; done"
-echo "You can ask git to add all file as upstream tree:"
-echo "    git add \*"
-echo "Finally, you will be ready for push on GitHub."
+#echo "You can ask git to remove all file as upstream tree:"
+#echo "    for all in \`git status | grep \"deleted:\" | cut -d ':' -f 2 - | sed 's/ //g'\`; do echo \$all; git rm \"\$all\"; done"
+#echo "You can ask git to add all file as upstream tree:"
+#echo "    git add *"
+echo "You can stage all changes:"
+echo "   git add -u"
+echo "You can commit changes adding a message refering to upstream version:"
+echo ""
+[ -f ${TIZEN_DST}/src/xwalk/VERSION ] && cat ${TIZEN_DST}/src/xwalk/VERSION
+echo ""
+echo "   upstream commit-id in from github crosswalk.git: "
+echo "Upstream version 5.34.92.0 --- TODO"
+echo "   git commit -s"
+echo ""
+echo "Finally, you will be ready for push on GitHub:"
+echo "  git push "
+echo "Or on Tizen.org:"
+echo "  git push origin HEAD:refs/for/master"
+
+exit 0
+#################################################################
+
