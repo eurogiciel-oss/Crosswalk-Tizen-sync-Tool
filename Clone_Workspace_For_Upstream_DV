@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2013, Intel Inc.
+# Copyright 2014, Eurogiciel Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,71 +16,140 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # native
 #
-#Created on  06 fevr. 2014
-#
-
 
 UPSTREAM_SRC=${PWD}
 TIZEN_DST=${PWD}/Tizen_Crosswalk
 ROOTDIR=${PWD}
 
-which svn > /dev/null || { echo "Subversion is not installed. Please install it before using this script." ; exit 1; }
+###
+### Functions ###
+###
 
-# TODO: Check source directory presence
+# Description:
+#  Script helper informations for script usage
+# Args:
+#  None
+function usage {
+  echo "$0 script make snapshot of XWalk project source tree"
+  echo "for delivery on Tizen.org with GBS constraints (git submodules not handled)"
+  echo ""
+  echo "Usage:"
+  echo "  $0 [Upstream Xwalk root dir] [Snapshot Destination Dir]"
+  echo "    \$1: Upstream Root dir. (should contain \$1/src/xwalk subdirs)"
+  echo "    \$2: Snapshot destination dir. (git repo cloned from Tizen.org crosswalk project)"
+  echo ""
+  echo "Args are optional. Default path tree are :"
+  echo "  \$1 is ${UPSTREAM_SRC}"
+  echo "  \$2 is ${TIZEN_DST}"
+}
 
-#mkdir -p ${UPSTREAM_SRC}
-mkdir -p ${TIZEN_DST}
+# Description:
+#  Launch Rsync to perform the upstream tree snapshot for delivery on Tizen.org
+# Args :
+#  $1: XWalk src/ directory
+#  $2: Snapshot destination directory
+function snapshot_with_rsync {
+  [ $# != 2 ] && {
+    echo "${FUNCNAME}(): Not enough args"
+    exit 1
+  }
 
-#Import the sources
-#mkdir -p ${TIZEN_DST}/src
-#rm -fr ${TIZEN_DST}/src/*
+  [ -d $1/xwalk ] || {
+    echo "${FUNCNAME}(): Wrong path \$1"
+    exit 1
+  }
 
-#cp -ra ${UPSTREAM_SRC}/src/* ${TIZEN_DST}/src/
-##Clean git project
-#find ${TIZEN_DST}/src -type d -name '.git' -exec rm -fr {} \;
-#find ${TIZEN_DST}/src -type d -name '.gitignore' -exec rm -f {} \;
-##Clean SVN project
-#find ${TIZEN_DST}/src -type d -name '.svn' -exec rm -fr {} \;
+  mkdir -p $2
 
-echo "Prepare for push on Tizen.org : rsync process in progress..."
-time rsync -a --delete --force --delete-excluded --exclude '.git*' --exclude '.svn' ${UPSTREAM_SRC}/src ${TIZEN_DST}
+  echo "Will sync following dirs:"
+  echo " Xwalk src dir = $1"
+  echo " Tizen.org dest dir = $2"
+  echo ""
+  echo "rsync in progress:"
+  time rsync -a --delete --force --delete-excluded --exclude '.git*' --exclude '.svn' $1 $2
+  echo ""
+  echo "done."
+
+  #Import packging (gbs do not allow link.)
+  if [ -d $1/xwalk/packaging ]; then
+    rm -rf $2/packaging
+    mkdir -p $2/packaging
+    cp -a $1/xwalk/packaging/* $2/packaging/
+    rm -f $2/packaging/gbp*
+  else
+    echo "Warning: packaging directory not found in upstream tree. Ignoring sync in destination dir"
+  fi
+}
+
+###
+### Script entry point ###
+###
+
+# set -x
+
+# Arguments check
+[ $# == 1 ] && {
+  case "$1" in
+    *)
+      echo "Not enough arguments."
+      echo ""
+      usage
+      exit 1
+      ;;
+    "-h") usage;;
+    "-help") usage;;
+    "--help") usage;;
+  esac
+
+  exit 0
+}
+
+[ $# == 2 ] && {
+  UPSTREAM_SRC=$1
+  TIZEN_DST=$2
+}
+
+# Check tools presence
+which rsync > /dev/null || { echo "Error: Rsync is not installed. Please install it before using this script." ; exit 1; }
+
+# Check source directory presence
+[ -d ${UPSTREAM_SRC}/src/xwalk ] || {
+  echo "Error: Xwalk upstream directory ${UPSTREAM_SRC}/src/xwalk not found. Stopping."
+  exit 1
+}
+
+echo "-------- Prepare upstream snapshot"
+snapshot_with_rsync ${UPSTREAM_SRC}/src ${TIZEN_DST}
 echo ""
-echo "done."
-
-#Import packging (gbs do not allow link.)
-mkdir -p ${TIZEN_DST}/packaging
-rm ${TIZEN_DST}/packaging/*
-cp ${UPSTREAM_SRC}/src/xwalk/packaging/* ${TIZEN_DST}/packaging/
-rm -f ${TIZEN_DST}/packaging/gbp*
 
 # Display some informations:
 echo "Source code as been duplicated in ${TIZEN_DST}"
 echo "Here are some tips for next steps :"
 echo ""
 echo "First go to dest dir:"
-echo "    cd ${TIZEN_DST}"
+echo "   cd ${TIZEN_DST}"
 echo "You can see changes using:"
-echo "    git status"
-#echo "You can ask git to remove all file as upstream tree:"
-#echo "    for all in \`git status | grep \"deleted:\" | cut -d ':' -f 2 - | sed 's/ //g'\`; do echo \$all; git rm \"\$all\"; done"
-#echo "You can ask git to add all file as upstream tree:"
-#echo "    git add *"
+echo "   git status"
 echo "You can stage all changes:"
-echo "    git add -u"
-echo "    git add ."
+echo "   git add -u"
+echo "   git add ."
 echo "You can commit changes adding a message refering to upstream version:"
 echo ""
-[ -f ${TIZEN_DST}/src/xwalk/VERSION ] && cat ${TIZEN_DST}/src/xwalk/VERSION
+VERSION_FILE=${TIZEN_DST}/src/xwalk/VERSION
+UPSTREAM_COMMITID=$(cd ${UPSTREAM_SRC}/src/xwalk; git log | head -1 | cut -d ' ' -f 2 -; cd ${OLDPWD}; )
+[ -f ${VERSION_FILE} ] && {
+  #cat ${VERSION_FILE}
+  MAJOR_V=$(grep MAJOR ${VERSION_FILE} | cut -d '=' -f 2 -)
+  MINOR_V=$(grep MINOR ${VERSION_FILE} | cut -d '=' -f 2 -)
+  BUILD_V=$(grep BUILD ${VERSION_FILE} | cut -d '=' -f 2 -)
+  PATCH_V=$(grep PATCH ${VERSION_FILE} | cut -d '=' -f 2 -)
+  echo "   git commit -sm \"Upstream version ${MAJOR_V}.${MINOR_V}.${BUILD_V}.${PATCH_V}"
+  echo ""
+  echo "Upstream commit-id ${UPSTREAM_COMMITID}\""
+}
 echo ""
-echo "   upstream commit-id in from github crosswalk.git: "
-cd ${UPSTREAM_SRC}/src/xwalk
-echo "   `git log | head -1`"
-cd ${OLDPWD}
-echo "Upstream version 5.34.92.0 --- TODO"
-echo "   git commit -s"
-echo ""
-echo "Finally, you will be ready for push on GitHub:"
-echo "  git push "
+#echo "Finally, you will be ready for push on GitHub:"
+#echo "  TODO:git push "
 echo "Or on Tizen.org:"
 echo "  git push origin HEAD:refs/for/master"
 
