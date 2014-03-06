@@ -27,7 +27,6 @@
 
 ### Vars ###
 UPSTREAM_SRC=${PWD}
-TIZEN_DST=${PWD}/Tizen_Crosswalk
 LOGFILE=${PWD}/.Tizen_sync.log
 
 
@@ -41,12 +40,28 @@ function drop_logs {
 # Launch a command line and catch stdio & stderr output in a log file.
 function process_and_logs {
   [ $# -eq 0 ] || {
-    echo "$ $*" | tee -a ${LOGFILE}
+    retval=0
+
+    if [ "$1" != "echo" ]; then
+      echo "  $ "$* | tee -a ${LOGFILE}
+    fi
+
     if [ "$1" == "cd" ]; then
       $* 2>&1
+      retval=$?
     else
       $* 2>&1 | tee -a ${LOGFILE}
+      retval=${PIPESTATUS[0]}
     fi
+
+    return ${retval}
+  }
+}
+
+function restore_gclient_orig {
+  # TODO: use git instead.
+  [ -f .gclient.orig ] && {
+    process_and_logs mv .gclient.orig .gclient
   }
 }
 
@@ -55,10 +70,18 @@ function process_and_logs {
 SCRIPTROOTDIR=${PWD}
 
 which svn > /dev/null || { echo "Subversion is not installed. Please install it before using this script." ; exit 1; }
+
 drop_logs
 
+# Script can be called with commit-id (in arg 1) to prepare Tizen.org delivery. Some developpers stuffs are not done in this mode.
+commitid=""
+if [ $# -gt 0 ]; then
+  commitid=$1
+  process_and_logs echo "Info: Argument passed: script is in use for Tizen.org delivery"
+  process_and_logs echo "commit-id: ${commitid}"
+fi
+
 process_and_logs mkdir -p ${UPSTREAM_SRC}
-#mkdir -p ${TIZEN_DST}
 
 # Catch GClient
 [ -d depot_tools ] || process_and_logs git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -68,14 +91,29 @@ process_and_logs cd ..
 
 PATH=$PWD/depot_tools:$PATH
 
+restore_gclient_orig
+
 # if project already downloaded, catch latest upstream version
-[ -d ${UPSTREAM_SRC}/src/xwalk ] && (
-      process_and_logs echo "Upstream project already present : Aligning local dir on remote/origin/master"
-      process_and_logs cd ${UPSTREAM_SRC}/src/xwalk
-      process_and_logs git pull origin master
-      process_and_logs git checkout master
-      process_and_logs git reset --keep origin/master
-)
+[ -d ${UPSTREAM_SRC}/src/xwalk ] && {
+  echo "Upstream project already present in local dir:"
+  if [ -z ${commitid} ]; then
+    process_and_logs echo "Aligning on remote/origin/master"
+    process_and_logs cd ${UPSTREAM_SRC}/src/xwalk
+    process_and_logs git pull origin master
+    process_and_logs git checkout master
+    process_and_logs git reset --keep origin/master
+  else
+    process_and_logs echo "Aligning on ${commitid}"
+    process_and_logs cp .gclient .gclient.orig
+    process_and_logs echo "  $ sed \"s|origin/master|${commitid}|\" .gclient.orig \> .gclient"
+    sed "s|origin/master|${commitid}|" .gclient.orig > .gclient
+#    process_and_logs cd ${UPSTREAM_SRC}/src/xwalk
+#    process_and_logs git checkout ${commitid} || { echo "Error: Aligning on ${commitid} failed! Abording."; exit 1; }
+#    process_and_logs git reset --hard
+# f4033cf56f73b642defa0c2f7784732bafb28fd7
+#    process_and_logs git 
+  fi
+}
 
 # Catch Crosswalk upstream project
 process_and_logs cd ${UPSTREAM_SRC}
@@ -95,6 +133,8 @@ process_and_logs python $source_root/src/build/util/lastchange.py \
        -s $source_root/src/third_party/WebKit
 
 #process_and_logs cd $SCRIPTROOTDIR
+
+restore_gclient_orig
 
 # Add remote for Eurogiciel-OSS GitHub forked projects.
 if [ -d ${UPSTREAM_SRC}/src/third_party/WebKit ]; then
@@ -133,6 +173,9 @@ echo ""
 echo "Note for developpers: to build xwalk, you can perform:"
 echo "   cd ${UPSTREAM_SRC}/src/xwalk"
 echo "   gbs build --include-all -A x86_64 -P generic-x86_64 --define 'BUILDDIR_NAME /var/tmp/xwalk-build' -C"
+echo ""
+echo "Example of environment cloning for Tizen.org delivery:"
+echo "   ./Clone_Workspace_For_Upstream_DV \$PWD \$PWD/Tizen_Crosswalk-tizen.org"
 
 exit 0
 #################################################################
