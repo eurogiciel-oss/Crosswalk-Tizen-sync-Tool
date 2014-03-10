@@ -118,6 +118,12 @@ which rsync > /dev/null || { echo "Error: Rsync is not installed. Please install
   exit 1
 }
 
+echo "-------- Checkout master branch"
+cd ${TIZEN_DST}
+git checkout master
+cd ${OLDPWD}
+echo ""
+
 echo "-------- Prepare upstream snapshot"
 snapshot_with_rsync ${UPSTREAM_SRC}/src ${TIZEN_DST}
 echo ""
@@ -150,7 +156,8 @@ UPSTREAM_COMMITID=$(cd ${UPSTREAM_SRC}/src/xwalk; git log | head -1 | cut -d ' '
 echo ""
 #echo "Finally, you will be ready for push on GitHub:"
 #echo "  TODO:git push "
-echo "Or on Tizen.org:"
+echo "It is ready to push on Tizen.org:"
+echo "  git fetch origin --all -p # or pull"
 echo "  git push origin HEAD:refs/for/master"
 
 exit 0

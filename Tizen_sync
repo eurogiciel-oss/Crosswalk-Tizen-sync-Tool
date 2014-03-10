@@ -103,6 +103,9 @@ restore_gclient_orig
     process_and_logs git checkout master
     process_and_logs git reset --keep origin/master
   else
+    process_and_logs cd ${UPSTREAM_SRC}/src/xwalk
+    process_and_logs git fetch --all -p origin master
+    process_and_logs cd ${OLDPWD}
     process_and_logs echo "Aligning on ${commitid}"
     process_and_logs cp .gclient .gclient.orig
     process_and_logs echo "  $ sed \"s|origin/master|${commitid}|\" .gclient.orig \> .gclient"
